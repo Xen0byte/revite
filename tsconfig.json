@@ -14,10 +14,11 @@
         "isolatedModules": true,
         "noEmit": true,
         "jsx": "preserve",
+        "jsxImportSource": "preact",
         "jsxFactory": "h",
         "jsxFragmentFactory": "Fragment",
         "types": ["vite-plugin-pwa/client"],
         "experimentalDecorators": true
     },
-    "include": ["src", "ui/ui.tsx", "external/lang/Languages.ts"]
+    "include": ["src", "external/lang/Languages.ts"]
 }

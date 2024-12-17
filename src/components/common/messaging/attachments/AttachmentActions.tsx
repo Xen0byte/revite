@@ -4,24 +4,25 @@ import {
     Download,
 } from "@styled-icons/boxicons-regular";
 import { File, Video } from "@styled-icons/boxicons-solid";
+import { isFirefox } from "react-device-detect";
 import { API } from "revolt.js";
 
 import styles from "./AttachmentActions.module.scss";
 import classNames from "classnames";
 import { useContext } from "preact/hooks";
 
+import { IconButton } from "@revoltchat/ui";
+
 import { determineFileSize } from "../../../../lib/fileSize";
 
-import { AppContext } from "../../../../context/revoltjs/RevoltClient";
-
-import IconButton from "../../../ui/IconButton";
+import { useClient } from "../../../../controllers/client/ClientController";
 
 interface Props {
     attachment: API.File;
 }
 
 export default function AttachmentActions({ attachment }: Props) {
-    const client = useContext(AppContext);
+    const client = useClient();
     const { filename, metadata, size } = attachment;
 
     const url = client.generateFileURL(attachment);
@@ -51,7 +52,7 @@ export default function AttachmentActions({ attachment }: Props) {
                         href={download_url}
                         className={styles.downloadIcon}
                         download
-                        target="_blank"
+                        target={isFirefox || window.native ? "_blank" : "_self"}
                         rel="noreferrer">
                         <IconButton>
                             <Download size={24} />
@@ -69,7 +70,7 @@ export default function AttachmentActions({ attachment }: Props) {
                         href={download_url}
                         className={styles.downloadIcon}
                         download
-                        target="_blank"
+                        target={isFirefox || window.native ? "_blank" : "_self"}
                         rel="noreferrer">
                         <IconButton>
                             <Download size={24} />
@@ -89,7 +90,7 @@ export default function AttachmentActions({ attachment }: Props) {
                         href={download_url}
                         className={styles.downloadIcon}
                         download
-                        target="_blank"
+                        target={isFirefox || window.native ? "_blank" : "_self"}
                         rel="noreferrer">
                         <IconButton>
                             <Download size={24} />
@@ -118,7 +119,7 @@ export default function AttachmentActions({ attachment }: Props) {
                         href={download_url}
                         className={styles.downloadIcon}
                         download
-                        target="_blank"
+                        target={isFirefox || window.native ? "_blank" : "_self"}
                         rel="noreferrer">
                         <IconButton>
                             <Download size={24} />

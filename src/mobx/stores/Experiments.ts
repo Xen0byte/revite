@@ -10,7 +10,7 @@ import Store from "../interfaces/Store";
 /**
  * Union type of available experiments.
  */
-export type Experiment = "dummy" | "offline_users" | "plugins";
+export type Experiment = "dummy" | "offline_users" | "plugins" | "admin_beta";
 
 /**
  * Currently active experiments.
@@ -19,6 +19,7 @@ export const AVAILABLE_EXPERIMENTS: Experiment[] = [
     "dummy",
     "offline_users",
     "plugins",
+    "admin_beta",
 ];
 
 /**
@@ -28,18 +29,23 @@ export const EXPERIMENTS: {
     [key in Experiment]: { title: string; description: string };
 } = {
     dummy: {
-        title: "Dummy Experiment",
-        description: "This is a dummy experiment.",
+        title: "Placeholder Experiment",
+        description: "This is a placeholder experiment.",
     },
     offline_users: {
         title: "Re-enable offline users in large servers (>10k members)",
         description:
-            "If you can take the performance hit (for example, you're on desktop), you can re-enable offline users for big servers such as Revolt Lounge.",
+            "If you can take the performance hit - for example, if you're on desktop - you can re-enable offline users for big servers such as the Revolt Lounge.",
     },
     plugins: {
         title: "Experimental Plugin API",
         description:
             "This will enable the experimental plugin API. Only touch this if you know what you're doing.",
+    },
+    admin_beta: {
+        title: "Admin Panel Shortcuts",
+        description:
+            "Adds context menu entries to quickly jump to Revolt Admin Panel. This is intended for use by the team.",
     },
 };
 

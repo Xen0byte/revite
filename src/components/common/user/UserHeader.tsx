@@ -7,13 +7,11 @@ import styled from "styled-components/macro";
 import { openContextMenu } from "preact-context-menu";
 import { Text, Localizer } from "preact-i18n";
 
+import { Header, IconButton } from "@revoltchat/ui";
+
 import { isTouchscreenDevice } from "../../../lib/isTouchscreenDevice";
 
-import { useIntermediate } from "../../../context/intermediate/Intermediate";
-
-import Header from "../../ui/Header";
-import IconButton from "../../ui/IconButton";
-
+import { modalController } from "../../../controllers/modals/ModalController";
 import Tooltip from "../Tooltip";
 import UserStatus from "./UserStatus";
 
@@ -31,9 +29,14 @@ const HeaderBase = styled.div`
         text-overflow: ellipsis;
     }
 
+    .new-name {
+        font-size: 16px;
+        font-weight: 600;
+    }
+
     .username {
         cursor: pointer;
-        font-size: 16px;
+        font-size: 13px;
         font-weight: 600;
     }
 
@@ -49,17 +52,22 @@ interface Props {
 }
 
 export default observer(({ user }: Props) => {
-    const { writeClipboard } = useIntermediate();
-
     return (
-        <Header topBorder placement="secondary">
+        <Header topBorder palette="secondary">
             <HeaderBase>
+                <div className="new-name">
+                    {user.display_name ?? user.username}
+                </div>
                 <Localizer>
                     <Tooltip content={<Text id="app.special.copy_username" />}>
                         <span
                             className="username"
-                            onClick={() => writeClipboard(user.username)}>
-                            @{user.username}
+                            onClick={() =>
+                                modalController.writeText(user.username)
+                            }>
+                            {user.username}
+                            {"#"}
+                            {user.discriminator}
                         </span>
                     </Tooltip>
                 </Localizer>

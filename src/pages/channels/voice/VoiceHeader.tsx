@@ -6,22 +6,20 @@ import {
     VolumeFull,
     VolumeMute,
 } from "@styled-icons/boxicons-solid";
-import { Hashnode, Speakerdeck, Teamspeak } from "@styled-icons/simple-icons";
 import { observer } from "mobx-react-lite";
 import styled from "styled-components/macro";
 
 import { Text } from "preact-i18n";
 import { useMemo } from "preact/hooks";
 
-import VoiceClient from "../../../lib/vortex/VoiceClient";
-import { voiceState, VoiceStatus } from "../../../lib/vortex/VoiceState";
+import { Button } from "@revoltchat/ui";
 
-import { useIntermediate } from "../../../context/intermediate/Intermediate";
-import { useClient } from "../../../context/revoltjs/RevoltClient";
+import { voiceState, VoiceStatus } from "../../../lib/vortex/VoiceState";
 
 import Tooltip from "../../../components/common/Tooltip";
 import UserIcon from "../../../components/common/user/UserIcon";
-import Button from "../../../components/ui/Button";
+import { useClient } from "../../../controllers/client/ClientController";
+import { modalController } from "../../../controllers/modals/ModalController";
 
 interface Props {
     id: string;
@@ -31,6 +29,7 @@ const VoiceBase = styled.div`
     margin-top: 48px;
     padding: 20px;
     background: var(--secondary-background);
+    flex-grow: 1;
 
     .status {
         flex: 1 0;
@@ -55,8 +54,6 @@ const VoiceBase = styled.div`
 
     display: flex;
     flex-direction: column;
-
-    overflow-y: scroll;
 
     .participants {
         margin: 40px 20px;
@@ -85,8 +82,6 @@ const VoiceBase = styled.div`
 export default observer(({ id }: Props) => {
     if (voiceState.roomId !== id) return null;
 
-    const { openScreen } = useIntermediate();
-
     const client = useClient();
     const self = client.users.get(client.user!._id);
 
@@ -101,26 +96,27 @@ export default observer(({ id }: Props) => {
             <div className="participants">
                 {users && users.length !== 0
                     ? users.map((user, index) => {
-                          const id = keys![index];
+                          const user_id = keys![index];
                           return (
-                              <div key={id}>
+                              <div key={user_id}>
                                   <UserIcon
                                       size={80}
                                       target={user}
                                       status={false}
                                       voice={
-                                          client.user?._id === id &&
+                                          client.user?._id === user_id &&
                                           voiceState.isDeaf()
                                               ? "deaf"
-                                              : voiceState.participants!.get(id)
-                                                    ?.audio
+                                              : voiceState.participants!.get(
+                                                    user_id,
+                                                )?.audio
                                               ? undefined
                                               : "muted"
                                       }
                                       onClick={() =>
-                                          openScreen({
-                                              id: "profile",
-                                              user_id: id,
+                                          modalController.push({
+                                              type: "user_profile",
+                                              user_id,
                                           })
                                       }
                                   />
@@ -145,7 +141,7 @@ export default observer(({ id }: Props) => {
             </div>
             <div className="actions">
                 <Tooltip content={"Leave call"} placement={"top"}>
-                    <Button error onClick={voiceState.disconnect}>
+                    <Button palette="error" onClick={voiceState.disconnect}>
                         <PhoneOff width={20} />
                     </Button>
                 </Tooltip>

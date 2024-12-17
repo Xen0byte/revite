@@ -2,10 +2,8 @@ import { Refresh } from "@styled-icons/boxicons-regular";
 
 import { useEffect, useState } from "preact/hooks";
 
-import Button from "../../../components/ui/Button";
-import Checkbox from "../../../components/ui/Checkbox";
-import Tip from "../../../components/ui/Tip";
-import CategoryButton from "../../../components/ui/fluent/CategoryButton";
+import { Button, CategoryButton, Checkbox, Tip } from "@revoltchat/ui";
+
 import RLogo from "../assets/revolt_r.svg";
 
 export function Native() {
@@ -26,10 +24,10 @@ export function Native() {
 
     return (
         <div style={{ marginTop: "10px" }}>
-            <Tip hideSeparator>Some options might require a restart.</Tip>
+            <Tip>Some options might require a restart.</Tip>
             <h3>App Behavior</h3>
             <Checkbox
-                checked={autoStart ?? false}
+                value={autoStart ?? false}
                 disabled={typeof autoStart === "undefined"}
                 onChange={async (v) => {
                     if (v) {
@@ -40,12 +38,24 @@ export function Native() {
 
                     setAutoStart(v);
                 }}
-                description="Launch Revolt when you log into your computer.">
-                Start with computer
-            </Checkbox>
+                title="Start with computer"
+                description="Launch Revolt when you log into your computer."
+            />
 
             <Checkbox
-                checked={config.discordRPC}
+                value={config.minimiseToTray}
+                onChange={(minimiseToTray) => {
+                    window.native.set("minimiseToTray", minimiseToTray);
+                    setConfig({
+                        ...config,
+                        minimiseToTray,
+                    });
+                }}
+                title="Minimise to Tray"
+                description="Instead of closing, Revolt will hide in your tray."
+            />
+            <Checkbox
+                value={config.discordRPC}
                 onChange={(discordRPC) => {
                     window.native.set("discordRPC", discordRPC);
                     setConfig({
@@ -53,11 +63,11 @@ export function Native() {
                         discordRPC,
                     });
                 }}
-                description="Rep Revolt on your Discord status.">
-                Enable Discord status
-            </Checkbox>
-            <Checkbox
-                checked={config.build === "nightly"}
+                title="Enable Discord status"
+                description="Rep Revolt on your Discord status."
+            />
+            {/* <Checkbox
+                value={config.build === "nightly"}
                 onChange={(nightly) => {
                     const build = nightly ? "nightly" : "stable";
                     window.native.set("build", build);
@@ -67,12 +77,13 @@ export function Native() {
                         build,
                     });
                 }}
-                description="Use the beta branch of Revolt.">
-                Revolt Nightly
-            </Checkbox>
+                title="Revolt Nightly"
+                description="Use the beta branch of Revolt."
+            /> */}
+
             <h3>Titlebar</h3>
             <Checkbox
-                checked={!config.frame}
+                value={!config.frame}
                 onChange={(frame) => {
                     window.native.set("frame", !frame);
                     setHintRelaunch(true);
@@ -81,12 +92,12 @@ export function Native() {
                         frame: !frame,
                     });
                 }}
-                description={<>Let Revolt use its own window frame.</>}>
-                Custom window frame
-            </Checkbox>
+                title="Custom window frame"
+                description="Let Revolt use its own window frame."
+            />
             <Checkbox //FIXME: In Titlebar.tsx, enable .quick css
                 disabled={true}
-                checked={!config.frame}
+                value={!config.frame}
                 onChange={(frame) => {
                     window.native.set("frame", !frame);
                     setHintRelaunch(true);
@@ -95,12 +106,12 @@ export function Native() {
                         frame: !frame,
                     });
                 }}
-                description="Show mute/deafen buttons on the titlebar.">
-                Enable quick action buttons
-            </Checkbox>
+                title="Enable quick action buttons"
+                description="Show mute/deafen buttons on the titlebar."
+            />
             <h3>Advanced</h3>
             <Checkbox
-                checked={config.hardwareAcceleration}
+                value={config.hardwareAcceleration}
                 onChange={async (hardwareAcceleration) => {
                     window.native.set(
                         "hardwareAcceleration",
@@ -112,19 +123,20 @@ export function Native() {
                         hardwareAcceleration,
                     });
                 }}
-                description="Uses your GPU to render the app, disable if you run into visual issues.">
-                Hardware Acceleration
-            </Checkbox>
+                title="Hardware Acceleration"
+                description="Uses your GPU to render the app, disable if you run into visual issues."
+            />
+
             <p style={{ display: "flex", gap: "8px" }}>
                 <Button
-                    contrast
+                    palette="secondary"
                     compact
                     disabled={!hintReload}
                     onClick={window.native.reload}>
                     Reload Page
                 </Button>
                 <Button
-                    contrast
+                    palette="secondary"
                     compact
                     disabled={!hintRelaunch}
                     onClick={window.native.relaunch}>
@@ -132,11 +144,11 @@ export function Native() {
                 </Button>
             </p>
             <h3 style={{ marginTop: "4em" }}>Local Development Mode</h3>
-            {config.build === "dev" ? (
+            {/*config.build === "dev" ? (
                 <>
                     <h5>Development mode is currently on.</h5>
                     <Button
-                        contrast
+                        palette="secondary"
                         compact
                         onClick={() => {
                             window.native.set("build", "stable");
@@ -148,29 +160,33 @@ export function Native() {
             ) : (
                 <>
                     <Checkbox
-                        checked={confirmDev}
+                        value={confirmDev}
                         onChange={setConfirmDev}
+                        title="I understand there's no going back."
                         description={
                             <>
-                                This will change the app to the 'dev' branch,
-                                instead loading the app from a local server on
-                                your machine.
+                                {
+                                    "This will change the app to the 'dev' branch, instead loading the app from a local server on your machine."
+                                }
                                 <br />
                                 <b>
-                                    Without a server running,{" "}
+                                    {"Without a server running, "}
                                     <span style={{ color: "var(--error)" }}>
-                                        the app will not load!
+                                        {"the app will not load!"}
                                     </span>
                                 </b>
                                 <br />
-                                <code>yarn dev --port 3001</code>
+                                {
+                                    "Make sure the app is available on port 3001 by running "
+                                }
+                                <code>{"yarn dev --port 3001 --host"}</code>
+                                {"."}
                             </>
-                        }>
-                        I understand there's no going back.
-                    </Checkbox>
+                        }
+                    />
                     <p>
                         <Button
-                            error
+                            palette="error"
                             compact
                             disabled={!confirmDev}
                             onClick={() => {
@@ -181,7 +197,7 @@ export function Native() {
                         </Button>
                     </p>
                 </>
-            )}
+            )*/}
             <hr />
             <CategoryButton
                 icon={<img src={RLogo} draggable={false} />}

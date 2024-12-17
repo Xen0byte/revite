@@ -4,9 +4,8 @@ import styles from "./Embed.module.scss";
 import classNames from "classnames";
 import { useContext } from "preact/hooks";
 
-import { useIntermediate } from "../../../../context/intermediate/Intermediate";
-import { useClient } from "../../../../context/revoltjs/RevoltClient";
-
+import { useClient } from "../../../../controllers/client/ClientController";
+import { modalController } from "../../../../controllers/modals/ModalController";
 import { MessageAreaWidthContext } from "../../../../pages/channels/messaging/MessageArea";
 import Markdown from "../../../markdown/Markdown";
 import Attachment from "../attachments/Attachment";
@@ -24,7 +23,6 @@ const MAX_PREVIEW_SIZE = 150;
 export default function Embed({ embed }: Props) {
     const client = useClient();
 
-    const { openScreen, openLink } = useIntermediate();
     const maxWidth = Math.min(
         useContext(MessageAreaWidthContext) - CONTAINER_PADDING,
         MAX_EMBED_WIDTH,
@@ -59,7 +57,7 @@ export default function Embed({ embed }: Props) {
 
             if (embed.type === "Text") {
                 mw = MAX_EMBED_WIDTH;
-                mh = 0;
+                mh = 1;
             } else {
                 switch (embed.special?.type) {
                     case "YouTube":
@@ -68,7 +66,9 @@ export default function Embed({ embed }: Props) {
                         mh = embed.video?.height ?? 720;
                         break;
                     }
-                    case "Twitch": {
+                    case "Twitch":
+                    case "Lightspeed":
+                    case "Streamable": {
                         mw = 1280;
                         mh = 720;
                         break;
@@ -89,6 +89,20 @@ export default function Embed({ embed }: Props) {
             }
 
             const { width, height } = calculateSize(mw, mh);
+            if (embed.type === "Website" && embed.special?.type === "GIF") {
+                return (
+                    <EmbedMedia
+                        embed={embed}
+                        width={
+                            height *
+                            ((embed.image?.width ?? 0) /
+                                (embed.image?.height ?? 0))
+                        }
+                        height={height}
+                    />
+                );
+            }
+
             return (
                 <div
                     className={classNames(styles.embed, styles.website)}
@@ -128,7 +142,11 @@ export default function Embed({ embed }: Props) {
                                 <a
                                     onMouseDown={(ev) =>
                                         (ev.button === 0 || ev.button === 1) &&
-                                        openLink(embed.url!)
+                                        modalController.openLink(
+                                            embed.url!,
+                                            undefined,
+                                            true,
+                                        )
                                     }
                                     className={styles.title}>
                                     {embed.title}
@@ -176,8 +194,25 @@ export default function Embed({ embed }: Props) {
                     type="text/html"
                     frameBorder="0"
                     loading="lazy"
-                    onClick={() => openScreen({ id: "image_viewer", embed })}
-                    onMouseDown={(ev) => ev.button === 1 && openLink(embed.url)}
+                    onClick={() =>
+                        modalController.push({ type: "image_viewer", embed })
+                    }
+                    onMouseDown={(ev) =>
+                        ev.button === 1 &&
+                        modalController.openLink(embed.url, undefined, true)
+                    }
+                />
+            );
+        }
+        case "Video": {
+            return (
+                <video
+                    className={classNames(styles.embed, styles.image)}
+                    style={calculateSize(embed.width, embed.height)}
+                    src={client.proxyFile(embed.url)}
+                    frameBorder="0"
+                    loading="lazy"
+                    controls
                 />
             );
         }

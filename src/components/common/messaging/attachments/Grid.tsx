@@ -2,13 +2,12 @@ import styled from "styled-components/macro";
 
 import { Ref } from "preact";
 
-import { Children } from "../../../../types/Preact";
-
 const Grid = styled.div<{ width: number; height: number }>`
     --width: ${(props) => props.width}px;
     --height: ${(props) => props.height}px;
 
     display: grid;
+    overflow: hidden;
     aspect-ratio: ${(props) => props.width} / ${(props) => props.height};
 
     max-width: min(var(--width), var(--attachment-max-width));

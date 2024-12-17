@@ -1,4 +1,4 @@
-import { Chrome, Android, Apple, Windows } from "@styled-icons/boxicons-logos";
+import { Chrome, Android, Windows } from "@styled-icons/boxicons-logos";
 import { HelpCircle, Desktop, LogOut } from "@styled-icons/boxicons-regular";
 import {
     Safari,
@@ -6,8 +6,10 @@ import {
     Microsoftedge,
     Linux,
     Macos,
+    Ios,
     Opera,
     Samsung,
+    Windowsxp,
 } from "@styled-icons/simple-icons";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useHistory } from "react-router-dom";
@@ -16,31 +18,35 @@ import { decodeTime } from "ulid";
 
 import styles from "./Panes.module.scss";
 import { Text } from "preact-i18n";
-import { useContext, useEffect, useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
+
+import {
+    Button,
+    CategoryButton,
+    LineDivider,
+    Preloader,
+    Tip,
+} from "@revoltchat/ui";
 
 import { dayjs } from "../../../context/Locale";
-import { AppContext } from "../../../context/revoltjs/RevoltClient";
-import { useIntermediate } from "../../../context/intermediate/Intermediate";
 
-import Button from "../../../components/ui/Button";
-import Preloader from "../../../components/ui/Preloader";
-import Tip from "../../../components/ui/Tip";
-import CategoryButton from "../../../components/ui/fluent/CategoryButton";
+import { useClient } from "../../../controllers/client/ClientController";
+import { modalController } from "../../../controllers/modals/ModalController";
 
 dayjs.extend(relativeTime);
 
 export function Sessions() {
-    const client = useContext(AppContext);
+    const client = useClient();
     const deviceId =
-        typeof client.session === "object" ? client.session._id : undefined;
+        typeof client.session === "object"
+            ? (client.session as unknown as { _id: string })._id
+            : undefined;
 
     const [sessions, setSessions] = useState<API.SessionInfo[] | undefined>(
         undefined,
     );
     const [attemptingDelete, setDelete] = useState<string[]>([]);
     const history = useHistory();
-
-    const { openScreen } = useIntermediate();
 
     function switchPage(to: string) {
         history.replace(`/settings/${to}`);
@@ -96,7 +102,9 @@ export function Sessions() {
             case /mac.*os/i.test(name):
                 return <Macos size={14} />;
             case /i(Pad)?os/i.test(name):
-                return <Apple size={14} />;
+                return <Ios size={14} />;
+            case /windows 7/i.test(name):
+                return <Windowsxp size={14} />;
             case /windows/i.test(name):
                 return <Windows size={14} />;
             default:
@@ -168,7 +176,7 @@ export function Sessions() {
                                         type="text"
                                         className={styles.name}
                                         value={session.name}
-                                        autocomplete="off"
+                                        autoComplete="off"
                                         style={{ pointerEvents: "none" }}
                                     />
                                     <span className={styles.time}>
@@ -214,28 +222,22 @@ export function Sessions() {
             })}
             <hr />
             <CategoryButton
-                onClick={async () => {
-                    openScreen({
-                        id: "sessions",
-                        confirm: async () => {
-                            // ! FIXME: add to rAuth
-                            const del: string[] = [];
-                            render.forEach((session) => {
-                                if (deviceId !== session._id) {
-                                    del.push(session._id);
-                                }
-                            });
-
-                            setDelete(del);
-
-                            for (const id of del) {
-                                await client.api.delete(`/auth/session/${id as ""}`);
-                            }
-
-                            setSessions(sessions.filter((x) => x._id === deviceId));
-                        }
+                onClick={async () =>
+                    modalController.push({
+                        type: "sign_out_sessions",
+                        client,
+                        onDeleting: () =>
+                            setDelete(
+                                render
+                                    .filter((x) => x._id !== deviceId)
+                                    .map((x) => x._id),
+                            ),
+                        onDelete: () =>
+                            setSessions(
+                                sessions.filter((x) => x._id === deviceId),
+                            ),
                     })
-                }}
+                }
                 icon={<LogOut size={24} color={"var(--error)"} />}
                 action={"chevron"}
                 description={
@@ -244,15 +246,15 @@ export function Sessions() {
                 <Text id="app.settings.pages.sessions.logout" />
             </CategoryButton>
 
+            <LineDivider />
             <Tip>
                 <span>
-                    <Text id="app.settings.tips.sessions.a" />
-                </span>{" "}
-                <a onClick={() => switchPage("account")}>
-                    <Text id="app.settings.tips.sessions.b" />
-                </a>
+                    <Text id="app.settings.tips.sessions.a" />{" "}
+                    <a onClick={() => switchPage("account")}>
+                        <Text id="app.settings.tips.sessions.b" />
+                    </a>
+                </span>
             </Tip>
         </div>
     );
 }
-

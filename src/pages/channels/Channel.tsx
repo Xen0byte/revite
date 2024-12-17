@@ -1,5 +1,6 @@
 import { Hash } from "@styled-icons/boxicons-regular";
 import { Ghost } from "@styled-icons/boxicons-solid";
+import dayjs from "dayjs";
 import { reaction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { Redirect, useParams } from "react-router-dom";
@@ -16,16 +17,14 @@ import { isTouchscreenDevice } from "../../lib/isTouchscreenDevice";
 import { useApplicationState } from "../../mobx/State";
 import { SIDEBAR_MEMBERS } from "../../mobx/stores/Layout";
 
-import { useClient } from "../../context/revoltjs/RevoltClient";
-
 import AgeGate from "../../components/common/AgeGate";
 import MessageBox from "../../components/common/messaging/MessageBox";
 import JumpToBottom from "../../components/common/messaging/bars/JumpToBottom";
 import NewMessages from "../../components/common/messaging/bars/NewMessages";
 import TypingIndicator from "../../components/common/messaging/bars/TypingIndicator";
-import { PageHeader } from "../../components/ui/Header";
-
 import RightSidebar from "../../components/navigation/RightSidebar";
+import { PageHeader } from "../../components/ui/Header";
+import { useClient } from "../../controllers/client/ClientController";
 import ChannelHeader from "./ChannelHeader";
 import { MessageArea } from "./messaging/MessageArea";
 import VoiceHeader from "./voice/VoiceHeader";
@@ -100,14 +99,23 @@ const PlaceholderBase = styled.div`
 export const Channel = observer(
     ({ id, server_id }: { id: string; server_id: string }) => {
         const client = useClient();
+        const state = useApplicationState();
 
         if (!client.channels.exists(id)) {
             if (server_id) {
                 const server = client.servers.get(server_id);
                 if (server && server.channel_ids.length > 0) {
+                    let target_id = server.channel_ids[0];
+                    const last_id = state.layout.getLastOpened(server_id);
+                    if (last_id) {
+                        if (client.channels.has(last_id)) {
+                            target_id = last_id;
+                        }
+                    }
+
                     return (
                         <Redirect
-                            to={`/server/${server_id}/channel/${server.channel_ids[0]}`}
+                            to={`/server/${server_id}/channel/${target_id}`}
                         />
                     );
                 }
@@ -156,6 +164,7 @@ const TextChannel = observer(({ channel }: { channel: ChannelI }) => {
 
         const checkUnread = () =>
             channel.unread &&
+            document.hasFocus() &&
             channel.client.unreads!.markRead(
                 channel._id,
                 channel.last_message_id!,
@@ -167,6 +176,46 @@ const TextChannel = observer(({ channel }: { channel: ChannelI }) => {
             () => channel.last_message_id,
             () => checkUnread(),
         );
+    }, [channel]);
+
+    useEffect(() => {
+        let lastSubscribed: number | undefined;
+        function subscribe() {
+            if (document.hasFocus()) {
+                if (
+                    !lastSubscribed ||
+                    dayjs().subtract(10, "minutes").isAfter(lastSubscribed)
+                ) {
+                    lastSubscribed = +new Date();
+                    channel.server?.subscribe();
+                }
+            }
+        }
+
+        // Trigger logic every minute
+        const subTimer = setInterval(subscribe, 60e3);
+        subscribe();
+
+        function onFocus() {
+            // Mark channel as read if it's unread
+            if (channel.unread) {
+                channel.client.unreads!.markRead(
+                    channel._id,
+                    channel.last_message_id!,
+                    true,
+                );
+            }
+
+            // Subscribe to channel if expired
+            subscribe();
+        }
+
+        addEventListener("focus", onFocus);
+
+        return () => {
+            removeEventListener("focus", onFocus);
+            clearInterval(subTimer);
+        };
     }, [channel]);
 
     return (

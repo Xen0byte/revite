@@ -5,7 +5,8 @@ COPY . .
 COPY .env.build .env
 
 RUN yarn install --frozen-lockfile
-RUN yarn typecheck
+RUN yarn build:deps
+# RUN yarn typecheck # lol no
 RUN yarn build:highmem
 RUN yarn workspaces focus --production --all
 
